@@ -21,6 +21,8 @@ static int (*bpf_map_delete_elem)(void *map, void *key) =
 	(void *) BPF_FUNC_map_delete_elem;
 static int (*bpf_probe_read)(void *dst, int size, void *unsafe_ptr) =
 	(void *) BPF_FUNC_probe_read;
+static int (*bpf_probe_read_str)(void *dst, int size, void *unsafe_ptr) =
+	(void *)BPF_FUNC_probe_read_str;
 static unsigned long long (*bpf_ktime_get_ns)(void) =
 	(void *) BPF_FUNC_ktime_get_ns;
 static int (*bpf_trace_printk)(const char *fmt, int fmt_size, ...) =
@@ -190,5 +192,26 @@ static int (*bpf_skb_change_head)(void *, int len, int flags) =
 		bpf_probe_read(&(ip), sizeof(ip),				\
 				(void *)(PT_REGS_FP(ctx) + sizeof(ip))); })
 #endif
+
+/*
+the TP_DATA_LOC_READ_* macros are used for reading from a field that's pointed
+to by a __data_loc variable.
+
+FYI, a __data_loc variable is really an int that contains within it the data
+needed to get the location of the actual value. these macros do the
+transformation needed to get that final location and then read from it.
+
+this code is from iovisor/bcc file src/cc/exports/helpers.h and modified by
+Netdata's Agent team for inclusion in Netdata.
+*/
+#define TP_DATA_LOC_READ_CONST(_dst, _arg, _data_loc, _length) do {           \
+    unsigned short __offset = _data_loc & 0xFFFF;                             \
+    bpf_probe_read((void *)_dst, _length, (char *)_arg + __offset);           \
+} while (0)
+#define TP_DATA_LOC_READ(_dst, _arg, _data_loc) do {                          \
+    unsigned short __offset = _data_loc & 0xFFFF;                             \
+    unsigned short __length = _data_loc >> 16;                                \
+    bpf_probe_read((void *)_dst, __length, (char *)_arg + __offset);          \
+} while (0)
 
 #endif

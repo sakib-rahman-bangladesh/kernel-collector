@@ -37,13 +37,17 @@ NETDATA_APPS= btrfs \
 	      dc \
 	      disk \
 	      ext4 \
+	      fd \
 	      fdatasync \
 	      fsync \
+	      hardirq \
 	      mount \
 	      msync \
 	      nfs \
-	      socket \
+	      oomkill \
 	      process \
+	      socket \
+	      softirq \
 	      sync \
 	      sync_file_range \
 	      syncfs \

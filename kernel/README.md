@@ -23,11 +23,13 @@ Right now we have the following `eBPF` program collectors:
 - `fdatasync_kern.c`      : monitor calls for syscall `fdatasync`.
 - `fsync_kern.c`          : monitor calls for syscall `fsync`.
 - `hardirq_kern.c`        : provides hard interrupt (hard IRQ) latency monitoring.
+- `mdflush_kern.c`        : monitor flushes at the md driver level.
 - `mount_kern.c`          : monitor calls for syscalls `mount` and `umount`.
 - `msync_kern.c`          : monitor calls for syscall `msync`.
 - `nfs_kern.c`            : provides nfs monitoring.
 - `oomkill_kern.c`        : provides info on which processes got OOM killed.
 - `process_kern.c`        : provides process, file and VFS stats.
+- `shm_kern.c`            : monitor calls for syscalls `shmget`, `shmat`, `shmdt` and `shmctl`.
 - `socket_kern.c`         : provides network stats;
 - `softirq_kern.c`        : provides software interrupt (soft IRQ) latency monitoring.
 - `swap_kern.c`           : provides swap stats;

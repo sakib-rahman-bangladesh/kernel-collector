@@ -1,6 +1,7 @@
 CLANG = clang
 LLC = llc
 KERNELSOURCE = /usr/src/linux
+LIBBPF = ../libbpf
 ARCH = x86
 
 EXTRA_CFLAGS += -fno-stack-protector
@@ -8,14 +9,16 @@ EXTRA_CFLAGS += -fno-stack-protector
 LINUXINCLUDE += -I$(KERNELSOURCE)/arch/$(ARCH)/include/generated
 LINUXINCLUDE += -I$(KERNELSOURCE)/arch/$(ARCH)/include/generated/uapi
 LINUXINCLUDE += -I$(KERNELSOURCE)/include
-
 LINUXINCLUDE += -I$(KERNELSOURCE)/include/generated/uapi
 LINUXINCLUDE += -I$(KERNELSOURCE)/arch/$(ARCH)/include
 LINUXINCLUDE += -I$(KERNELSOURCE)/arch/$(ARCH)/include/uapi
-LINUXINCLUDE += -I$(KERNELSOURCE)/arch/$(ARCH)/include/generated
-LINUXINCLUDE += -I$(KERNELSOURCE)/arch/$(ARCH)/include/generated/uapi
 LINUXINCLUDE += -I$(KERNELSOURCE)/include
 LINUXINCLUDE += -I$(KERNELSOURCE)/include/uapi
+LINUXINCLUDE += -I$(KERNELSOURCE)
+
+LINUXINCLUDE += -I$(LIBBPF)/src
+LINUXINCLUDE += -I$(LIBBPF)/include
+LINUXINCLUDE += -I$(LIBBPF)/include/uapi
 LINUXINCLUDE += -include $(KERNELSOURCE)/include/linux/kconfig.h
 LINUXINCLUDE += -I../includes
 
@@ -41,16 +44,18 @@ NETDATA_APPS= btrfs \
 	      fdatasync \
 	      fsync \
 	      hardirq \
+	      mdflush \
 	      mount \
 	      msync \
 	      nfs \
 	      oomkill \
 	      process \
+	      shm \
 	      socket \
 	      softirq \
 	      sync \
-	      sync_file_range \
 	      syncfs \
+	      sync_file_range \
 	      swap \
 	      vfs \
 	      xfs \
@@ -66,30 +71,33 @@ all: $(NETDATA_APPS)
 	    	-Wno-compare-distinct-pointer-types \
 	    	-Wno-gnu-variable-sized-type-not-at-end \
 	    	-Wno-tautological-compare \
+	    	-fno-asynchronous-unwind-tables \
 		-DNETDATASEL=0 \
 		-D__BPF_TRACING__ \
 		-include ../includes/netdata_asm_goto.h \
-		-O2 -emit-llvm -c $<
+		-O2 -g -emit-llvm -c $<
 	$(LLC) -march=bpf -filetype=obj -o r$@ $(<:.c=.ll)
 	$(CLANG) $(EXTRA_CFLAGS) -S -nostdinc $(LINUXINCLUDE) $(LLVM_INCLUDES) \
 		-D__KERNEL__ -D__ASM_SYSREG_H -Wno-unused-value -Wno-pointer-sign \
 	    	-Wno-compare-distinct-pointer-types \
 	    	-Wno-gnu-variable-sized-type-not-at-end \
 	    	-Wno-tautological-compare \
+	    	-fno-asynchronous-unwind-tables \
 		-DNETDATASEL=1 \
 		-D__BPF_TRACING__ \
 		-include ../includes/netdata_asm_goto.h \
-		-O2 -emit-llvm -c $<
+		-O2 -g -emit-llvm -c $<
 	$(LLC) -march=bpf -filetype=obj -o d$@ $(<:.c=.ll)
 	$(CLANG) $(EXTRA_CFLAGS) -S -nostdinc $(LINUXINCLUDE) $(LLVM_INCLUDES) \
 		-D__KERNEL__ -D__ASM_SYSREG_H -Wno-unused-value -Wno-pointer-sign \
 	    	-Wno-compare-distinct-pointer-types \
 	    	-Wno-gnu-variable-sized-type-not-at-end \
 	    	-Wno-tautological-compare \
+	    	-fno-asynchronous-unwind-tables \
 		-DNETDATASEL=2 \
 		-D__BPF_TRACING__ \
 		-include ../includes/netdata_asm_goto.h \
-		-O2 -emit-llvm -c $<
+		-O2 -g -emit-llvm -c $<
 	$(LLC) -march=bpf -filetype=obj -o p$@ $(<:.c=.ll)
 	/bin/bash rename_binaries.sh "$(VER_MAJOR)" "$(VER_MINOR)" "$@"
 
